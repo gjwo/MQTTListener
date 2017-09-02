@@ -5,31 +5,11 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import static java.lang.Thread.sleep;
 
-public class MQTTListener extends Thread implements  Runnable, MqttCallback
+public class MQTTListener extends Thread implements MqttCallback
 {
     // run control variables
     private volatile boolean msgArrived;
     private volatile boolean stop;
-
-    @Override
-    public void connectionLost(Throwable throwable)
-    {
-        System.out.println("Subscriber connection lost!");
-        // code to reconnect to the broker would go here if desired
-
-    }
-    @Override
-    public void messageArrived(String s, MqttMessage mqttMessage) throws Exception
-    {
-        msgArrived = true;
-        System.out.println("| Topic: '" +s+ "'"+" Message: '" + new String(mqttMessage.getPayload())+ "'");
-    }
-    @Override
-    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
-    {
-
-    }
-
     private String baseTopic;
     private String clientId;
     private String topic;
@@ -38,7 +18,7 @@ public class MQTTListener extends Thread implements  Runnable, MqttCallback
     private MqttClient mqttClient;
     private int nbrMessagesReceivedOK;
 
-    public MQTTListener()
+    MQTTListener()
     {
         baseTopic   = "emon";
         clientId    = "PMon10";
@@ -63,6 +43,25 @@ public class MQTTListener extends Thread implements  Runnable, MqttCallback
         }
     }
 
+    @Override
+    public void connectionLost(Throwable throwable)
+    {
+        System.out.println("Subscriber connection lost!");
+        // code to reconnect to the broker would go here if desired
+
+    }
+    @Override
+    public void messageArrived(String s, MqttMessage mqttMessage) throws Exception
+    {
+        msgArrived = true;
+        System.out.println("| Topic: '" +s+ "'"+" Message: '" + new String(mqttMessage.getPayload())+ "'");
+    }
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
+    {
+
+    }
+
     /**
      * shutdownMQTTListener   Tidy shutdown of the processor
      */
@@ -80,7 +79,7 @@ public class MQTTListener extends Thread implements  Runnable, MqttCallback
         System.out.println(nbrMessagesReceivedOK+ " messages Received successfully");
     }
 
-    private void handleMQTTException(MqttException me)
+    private static void handleMQTTException(MqttException me)
     {
         System.out.println("reason "+me.getReasonCode());
         System.out.println("msg "+me.getMessage());
@@ -89,11 +88,8 @@ public class MQTTListener extends Thread implements  Runnable, MqttCallback
         System.out.println("exception "+me);
         me.printStackTrace();
     }
-    //
-    // Runnable implementation
-    //
 
-    /**
+     /**
      * run  The main processing loop
      */
     @Override
