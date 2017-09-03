@@ -9,23 +9,24 @@ public class MQTTListener extends Thread implements MqttCallback
 {
     // run control variables
     private volatile boolean msgArrived;
-    private volatile boolean stop;
-    private String baseTopic;
+    private static final String DEFAULT_CLIENT_ID = "MQTT_Listener";
     private String clientId;
+    private static final String DEFAULT_TOPIC = "emon";
     private String topic;
+    private static final int DEFAULT_QOS = 2;
     private int qos;
+    private static final String DEFAULT_BROKER = "tcp://localhost:1883";
     private String broker;
     private MqttClient mqttClient;
     private int nbrMessagesReceivedOK;
 
-    MQTTListener()
+    MQTTListener(String topic, String clientId, String broker, int qos)
     {
-        baseTopic   = "emon";
-        clientId    = "PMon10";
-        topic       = baseTopic +"/"+clientId;
-        qos         = 2;
-        broker      = "tcp://localhost:1883";
-
+        super();
+        this.topic = topic;
+        this.clientId = clientId;
+        this.broker = broker;
+        this.qos = qos;
         try
         {
             mqttClient = new MqttClient(broker, clientId, new MemoryPersistence());
@@ -42,6 +43,12 @@ public class MQTTListener extends Thread implements MqttCallback
             System.exit(2);
         }
     }
+
+    MQTTListener()
+    {
+        this(DEFAULT_TOPIC,DEFAULT_CLIENT_ID,DEFAULT_BROKER,DEFAULT_QOS);
+    }
+
 
     @Override
     public void connectionLost(Throwable throwable)
