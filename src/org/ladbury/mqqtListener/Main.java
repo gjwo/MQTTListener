@@ -11,15 +11,15 @@ public class Main implements IParameterValidator
     @Parameter(names = {"--help", "-h",},description = "Display help information", help = true)
     private boolean help=false;
     @Parameter(names={"--topic","-t" }, description = "MQTT topic maintopic/subtopic/etc ")
-    private String topic;
+    private String topic = MQTTListener.DEFAULT_TOPIC;
     @Parameter(names={"--client","-c" }, description = "The name of this MQTT client")
-    private String clientId;
+    private String clientId = MQTTListener.DEFAULT_CLIENT_ID;
     @Parameter(names={"--broker","-b" },description = "The protocol, address and port of the broker, e.g.tcp://localhost:1883")
-    private String broker;
+    private String broker = MQTTListener.DEFAULT_BROKER;
     @Parameter(names={"--qos","-q" }, description = "0: The broker/client will deliver the message once, with no confirmation.\n"+
                                                     "1: The broker/client will deliver the message at least once, with confirmation required.\n"+
                                                     "2: The broker/client will deliver the message exactly once by using a four step handshake.")
-    private int qos;
+    private int qos = MQTTListener.DEFAULT_QOS;
 
     public static void main(String[] argv)
     {

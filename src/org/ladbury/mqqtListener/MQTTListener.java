@@ -9,13 +9,13 @@ public class MQTTListener extends Thread implements MqttCallback
 {
     // run control variables
     private volatile boolean msgArrived;
-    private static final String DEFAULT_CLIENT_ID = "MQTT_Listener";
+    static final String DEFAULT_CLIENT_ID = "MQTT_Listener";
     private String clientId;
-    private static final String DEFAULT_TOPIC = "#";
+    static final String DEFAULT_TOPIC = "#";
     private String topic;
-    private static final int DEFAULT_QOS = 2;
+    static final int DEFAULT_QOS = 2;
     private int qos;
-    private static final String DEFAULT_BROKER = "tcp://localhost:1883";
+    static final String DEFAULT_BROKER = "tcp://localhost:1883";
     private String broker;
     private MqttClient mqttClient;
     private int nbrMessagesReceivedOK;
@@ -25,7 +25,6 @@ public class MQTTListener extends Thread implements MqttCallback
         super();
         if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
             else this.topic = topic;
-
         if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
             else this.clientId = clientId;
         if (broker.isEmpty()) this.clientId = DEFAULT_BROKER;
