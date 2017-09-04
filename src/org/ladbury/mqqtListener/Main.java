@@ -5,7 +5,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 public class Main implements IParameterValidator
 {
-    private JCommander jc;
+    //private JCommander jc;
     private int numberArgs =0;
     private static Main main;
     @Parameter(names = {"--help", "-h",},description = "Display help information", help = true)
@@ -20,6 +20,10 @@ public class Main implements IParameterValidator
                                                     "1: The broker/client will deliver the message at least once, with confirmation required.\n"+
                                                     "2: The broker/client will deliver the message exactly once by using a four step handshake.")
     private int qos = MQTTListener.DEFAULT_QOS;
+    @Parameter(names={"--user","-u" }, description = "The user name for logging into the MQTT broker")
+    private String user = "";
+    @Parameter(names={"--password","-p" }, description = "The password for logong into the MQTT broker")
+    private String password = "";
 
     public static void main(String[] argv)
     {
@@ -28,7 +32,8 @@ public class Main implements IParameterValidator
                 .addObject(main)
                 .build()
                 .parse(argv);
-        MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos);
+        main.numberArgs = argv.length;
+        MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos, main.user, main.password);
 	    mqttListener.start();
     }
 
