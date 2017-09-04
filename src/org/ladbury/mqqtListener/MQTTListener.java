@@ -22,10 +22,32 @@ public class MQTTListener extends Thread implements MqttCallback
     private MqttClient mqttClient;
     private int nbrMessagesReceivedOK;
     private MqttConnectOptions connOpts;
+    private volatile String lastTopic;
+    private volatile MqttMessage lastPayload;
+    private boolean api;
+    private boolean trace;
+    private boolean isApi()
+    {
+        return api;
+    }
+    void setApi(boolean api)
+    {
+        this.api = api;
+    }
+    private boolean isTrace()
+    {
+        return trace;
+    }
+    void setTrace(boolean trace)
+    {
+        this.trace = trace;
+    }
 
     MQTTListener(String topic, String clientId, String broker, int qos, String user, String password)
     {
         super();
+        api = false;
+        trace = false;
         if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
             else this.topic = topic;
         if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
@@ -49,7 +71,7 @@ public class MQTTListener extends Thread implements MqttCallback
             System.out.println("Connecting MQTTListener to broker: "+broker);
             mqttClient.connect(connOpts);
             System.out.println("MQTTListener Connected");
-            mqttClient.subscribe("emon/#", qos);
+            mqttClient.subscribe(topic, qos);
         } catch (MqttException e)
         {
             e.printStackTrace();
@@ -85,7 +107,8 @@ public class MQTTListener extends Thread implements MqttCallback
     public void messageArrived(String s, MqttMessage mqttMessage) throws Exception
     {
         msgArrived = true;
-        System.out.println("| Topic: '" +s+ "'"+" Message: '" + new String(mqttMessage.getPayload())+ "'");
+        lastTopic = s;
+        lastPayload = mqttMessage;
     }
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
@@ -134,8 +157,10 @@ public class MQTTListener extends Thread implements MqttCallback
             {
                 if (msgArrived)
                 {
-                    nbrMessagesReceivedOK++;
                     msgArrived = false;
+                    nbrMessagesReceivedOK++;
+                    if (isTrace()) System.out.println("| Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
+                    if (isApi()) processViaApi(lastTopic, lastPayload.getPayload());
                 }
                 sleep(100);
             }
@@ -144,5 +169,8 @@ public class MQTTListener extends Thread implements MqttCallback
             shutdownMQTTListener();
             System.out.println("Data Processing Interrupted, exiting");
         }
+    }
+    private void processViaApi(String lastTopic, byte[] payload)
+    {
     }
 }

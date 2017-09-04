@@ -22,8 +22,12 @@ public class Main implements IParameterValidator
     private int qos = MQTTListener.DEFAULT_QOS;
     @Parameter(names={"--user","-u" }, description = "The user name for logging into the MQTT broker")
     private String user = "";
-    @Parameter(names={"--password","-p" }, description = "The password for logong into the MQTT broker")
+    @Parameter(names={"--password","-p" }, description = "The password for logging into the MQTT broker")
     private String password = "";
+    @Parameter(names={"--trace","-t" }, description = "if present output a trace message")
+    private boolean trace = false;
+    @Parameter(names={"--api","-a" }, description = "if present output the message to the api")
+    private boolean api = false;
 
     public static void main(String[] argv)
     {
@@ -34,6 +38,8 @@ public class Main implements IParameterValidator
                 .parse(argv);
         main.numberArgs = argv.length;
         MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos, main.user, main.password);
+        mqttListener.setApi(main.api);
+        mqttListener.setTrace(main.trace);
 	    mqttListener.start();
     }
 
