@@ -21,6 +21,7 @@ public class MQTTListener extends Thread implements MqttCallback
     private String password = "";
     private MqttClient mqttClient;
     private int nbrMessagesReceivedOK;
+    private MqttConnectOptions connOpts;
 
     MQTTListener(String topic, String clientId, String broker, int qos, String user, String password)
     {
@@ -38,7 +39,7 @@ public class MQTTListener extends Thread implements MqttCallback
         {
             mqttClient = new MqttClient(broker, clientId, new MemoryPersistence());
             mqttClient.setCallback(this);
-            MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             if (!this.user.isEmpty())
             {
@@ -65,8 +66,19 @@ public class MQTTListener extends Thread implements MqttCallback
     @Override
     public void connectionLost(Throwable throwable)
     {
-        System.out.println("Subscriber connection lost!");
+        System.out.println("Listener connection to broker lost! Trying to reconnect");
         // code to reconnect to the broker would go here if desired
+        try
+        {
+            mqttClient.connect(connOpts);
+            System.out.println("Listener connection reconnected to broker");
+
+        } catch (MqttException me)
+        {
+            handleMQTTException(me);
+            System.out.println("Listener connection to broker lost! Reconnect failed");
+            System.exit(9);
+        }
 
     }
     @Override

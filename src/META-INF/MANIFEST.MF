@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: org.eclipse.paho.client.mqttv3-1.2.0.jar jcommander-1.72.j
+ ar
+Main-Class: org.ladbury.mqqtListener.Main
+
