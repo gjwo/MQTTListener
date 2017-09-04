@@ -24,8 +24,8 @@ public class Main implements IParameterValidator
     private String user = "";
     @Parameter(names={"--password","-p" }, description = "The password for logging into the MQTT broker")
     private String password = "";
-    @Parameter(names={"--trace","-t" }, description = "if present output a trace message")
-    private boolean trace = false;
+    @Parameter(names={"--echo","-e" }, description = "if present output a echo what is being seen message")
+    private boolean echo = false;
     @Parameter(names={"--api","-a" }, description = "if present output the message to the api")
     private boolean api = false;
 
@@ -43,7 +43,7 @@ public class Main implements IParameterValidator
         main.numberArgs = argv.length;
         MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos, main.user, main.password);
         mqttListener.setApi(main.api);
-        mqttListener.setTrace(main.trace);
+        mqttListener.setEcho(main.echo);
 	    mqttListener.start();
     }
 

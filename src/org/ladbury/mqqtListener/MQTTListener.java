@@ -28,7 +28,7 @@ public class MQTTListener extends Thread implements MqttCallback
     private volatile MqttMessage lastPayload;
     private int nbrMessagesReceivedOK;
     private boolean api;
-    private boolean trace;
+    private boolean echo;
 
     /**
      * MQTTListener Constructor
@@ -43,7 +43,7 @@ public class MQTTListener extends Thread implements MqttCallback
     {
         super();
         api = false;
-        trace = false;
+        echo = false;
         if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
             else this.topic = topic;
         if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
@@ -99,10 +99,10 @@ public class MQTTListener extends Thread implements MqttCallback
                 {
                     msgArrived = false;
                     nbrMessagesReceivedOK++;
-                    if (isTrace()) System.out.println("| Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
+                    if (isEcho()) System.out.println("| Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
                     if (isApi()) processViaApi(lastTopic, lastPayload.getPayload());
                 }
-                sleep(100);
+                sleep(10);
             }
         }catch (InterruptedException e)
         {
@@ -204,12 +204,12 @@ public class MQTTListener extends Thread implements MqttCallback
     {
         this.api = api;
     }
-    private boolean isTrace()
+    private boolean isEcho()
     {
-        return trace;
+        return echo;
     }
-    void setTrace(boolean trace)
+    void setEcho(boolean echo)
     {
-        this.trace = trace;
+        this.echo = echo;
     }
 }
