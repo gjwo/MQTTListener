@@ -29,6 +29,10 @@ public class Main implements IParameterValidator
     @Parameter(names={"--api","-a" }, description = "if present output the message to the api")
     private boolean api = false;
 
+    /**
+     * main             Program's entry point
+     * @param argv      parameters see definitions above
+     */
     public static void main(String[] argv)
     {
         Main.main = new Main();
@@ -43,13 +47,19 @@ public class Main implements IParameterValidator
 	    mqttListener.start();
     }
 
+    /**
+     *
+     * @param name                  The name of the parameter to be validated
+     * @param value                 Parameter value
+     * @throws ParameterException   Thrown if the parameter is invalid (aborts program)
+     */
     @Override
     public void validate(String name, String value) throws ParameterException
     {
         int n = Integer.parseInt(value);
         if (name.contains("q"))
         {
-            if ((n < 0) | (n > 2))
+            if ((n < 0) | (n > 2)) // Check QOS is in range
             {
                 throw new ParameterException("Parameter " + name + "should be  0,1 or 2" + "it was " + value + ")");
             }
