@@ -6,8 +6,7 @@ import com.sun.org.apache.xpath.internal.SourceTree;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.*;
 
 import static java.lang.Thread.sleep;
@@ -133,22 +132,40 @@ public class MQTTListener extends Thread implements MqttCallback
         int noDataFields = metricData.length;
         //System.out.println(noDataFields + " "+ message);
         //System.out.println(noDataFields + " " + metricData[0] + " " + metricData[1] + " " + metricData[2] + " " + metricData[3]+ " " + metricData[4]);
-        if ( ((noDataFields < 5) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
-        String timestamp = metricData[3]+"T"+metricData[4];
+        if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
+        String timestamp = metricData[3]; //+"T"+metricData[4];
+        HttpURLConnection conn = null;
         try
         {
             uri = new URI("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
-            HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-            conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
-            conn.addRequestProperty("Content-Type", "application/json");
-            OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
-            out.write("[{\n" +
-                    " \"reading\":"+metricData[0]+",\n" +
-                    " \"timestamp\":\""+timestamp+"\"\n" +
-                    "}]");
-            out.close();
+            conn = (HttpURLConnection) uri.toURL().openConnection();
         } catch (URISyntaxException | IOException e)
+        {
+            e.printStackTrace();
+            return;
+        }
+        try
+        {
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setRequestMethod("POST");
+            conn.addRequestProperty("Content-Type", "application/json; charset=utf-8");
+            conn.addRequestProperty("Accept", "application/json");
+            OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+            String json = "[{" + "\'reading\':"+metricData[0]+"," + "\'timestamp\':\'"+timestamp+"\'" + "}]";
+            System.out.println(uri.toString());
+            System.out.println(json);
+            out.write(json);
+            out.flush();
+            String line;
+            while ((line = in.readLine())!= null)
+            {
+                System.out.println(line);
+            }
+            out.close();
+        } catch (IOException e)
         {
             e.printStackTrace();
         }
