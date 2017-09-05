@@ -3,6 +3,11 @@ package org.ladbury.mqqtListener;
 import static java.lang.Thread.sleep;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.*;
+
 import static java.lang.Thread.sleep;
 
 public class MQTTListener extends Thread implements MqttCallback
@@ -99,7 +104,7 @@ public class MQTTListener extends Thread implements MqttCallback
                 {
                     msgArrived = false;
                     nbrMessagesReceivedOK++;
-                    if (isEcho()) System.out.println("| Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
+                    if (isEcho()) System.out.println("Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
                     if (isApi()) processViaApi(lastTopic, lastPayload.getPayload());
                 }
                 sleep(10);
@@ -112,6 +117,36 @@ public class MQTTListener extends Thread implements MqttCallback
     }
     private void processViaApi(String lastTopic, byte[] payload)
     {
+        // expected message emon/PMon10/Upstairs_Lighting/ApparentPower' Message: '0.000 VA at 05-Sep-2017 11:21:12'
+        URI uri;
+        String [] topics = lastTopic.split("/");
+        int topicDepth = topics.length;
+        if ((topicDepth < 4) ||
+                (!topics[0].equalsIgnoreCase("emon")) ||
+                (!topics[1].equalsIgnoreCase("PMon10")))return; // wrong format of topic
+        String circuitName = topics[2].toLowerCase(); //Should be the circuit name
+        String metricType = topics[3].toLowerCase(); // Should be the metrics type realPower, ApparentPower etc.
+        String [] metricData = payload.toString().split(" "); //
+        int dataFields = metricData.length;
+        if ( ((dataFields < 5) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
+        String timestamp = metricData[3]+"T"+metricData[4];
+        try
+        {
+            uri = new URI("192.168.1.127:3000/api/"+circuitName+"/"+metricType);
+            HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.addRequestProperty("Content-Type", "application/json");
+            OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
+            out.write("[{\n" +
+                    " \"reading\":"+metricData[0]+",\n" +
+                    " \"timestamp\":\""+timestamp+"\"\n" +
+                    "}]");
+            out.close();
+        } catch (URISyntaxException | IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     // Implementation of MqttCallback interface

@@ -41,6 +41,7 @@ public class Main implements IParameterValidator
                 .build()
                 .parse(argv);
         main.numberArgs = argv.length;
+        System.out.println("broker: "+ main.broker);
         MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos, main.user, main.password);
         mqttListener.setApi(main.api);
         mqttListener.setEcho(main.echo);
