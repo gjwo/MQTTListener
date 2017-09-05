@@ -46,6 +46,7 @@ public class Main implements IParameterValidator
         mqttListener.setApi(main.api);
         mqttListener.setEcho(main.echo);
 	    mqttListener.start();
+        mqttListener.printDataFrom("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
     }
 
     /**

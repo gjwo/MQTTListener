@@ -199,7 +199,7 @@ public class MQTTListener extends Thread implements MqttCallback
     }
 
 
-    private void printDataFrom(String resource, String start, String end)
+    void printDataFrom(String resource, String start, String end)
     {
         WebResource webResource = getResource(resource);
 
