@@ -5,12 +5,11 @@ import static java.lang.Thread.sleep;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.org.apache.xpath.internal.SourceTree;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-import java.io.*;
 import java.net.*;
+import java.util.HashMap;
 
 import static java.lang.Thread.sleep;
 
@@ -38,11 +37,13 @@ public class MQTTListener extends Thread implements MqttCallback
     private int nbrMessagesReceivedOK;
     private boolean api;
     private boolean echo;
+    private final HashMap<String, WebResource> resources;
+    private final Client restClient;
 
     /**
      * MQTTListener Constructor
      * @param topic         MQQT topic to be listen to / processed
-     * @param clientId      The name of this MQTT client
+     * @param clientId      The name of this MQTT restClient
      * @param broker        The protocol, address and port of the MQTT server / broker
      * @param qos           Quality of service
      * @param user          User name for secure connections empty string if not required
@@ -53,6 +54,8 @@ public class MQTTListener extends Thread implements MqttCallback
         super();
         api = false;
         echo = false;
+        resources = new HashMap<>();
+        restClient = Client.create();
         if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
             else this.topic = topic;
         if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
@@ -138,21 +141,29 @@ public class MQTTListener extends Thread implements MqttCallback
         if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
         String timestamp = metricData[3]; //+"T"+metricData[4];
 
-        Client client = Client.create();
-        WebResource webResource = client
-                .resource("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
+
+        // --------------
+        // RESTful code
+        //---------------
+
+        String resource = circuitName+"/"+metricType;
+        if(!resources.containsKey(resource))
+            resources.put(resource, restClient.resource("http://192.168.1.127:3000/api/"+resource));
 
         String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
+
+        WebResource webResource = resources.get(resource);
+
         ClientResponse response = webResource.type("application/json")
                 .post(ClientResponse.class, json);
 
         if (response.getStatus() != 200) {
             throw new RuntimeException("Failed : HTTP error code : "
                     + response.getStatus());
+            //TODO manage properly
         }
-        System.out.println("Output from Server .... \n");
-        String output = response.getEntity(String.class);
-        System.out.println(output);
+        // response if wanted:
+        //String output = response.getEntity(String.class);
     }
 
     // Implementation of MqttCallback interface
