@@ -2,6 +2,9 @@ package org.ladbury.mqqtListener;
 
 import static java.lang.Thread.sleep;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import com.sun.org.apache.xpath.internal.SourceTree;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -134,41 +137,22 @@ public class MQTTListener extends Thread implements MqttCallback
         //System.out.println(noDataFields + " " + metricData[0] + " " + metricData[1] + " " + metricData[2] + " " + metricData[3]+ " " + metricData[4]);
         if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
         String timestamp = metricData[3]; //+"T"+metricData[4];
-        HttpURLConnection conn = null;
-        try
-        {
-            uri = new URI("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
-            conn = (HttpURLConnection) uri.toURL().openConnection();
-        } catch (URISyntaxException | IOException e)
-        {
-            e.printStackTrace();
-            return;
-        }
-        try
-        {
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-            conn.setRequestMethod("POST");
-            conn.addRequestProperty("Content-Type", "application/json; charset=utf-8");
-            conn.addRequestProperty("Accept", "application/json");
-            OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
-            String json = "[{" + "\'reading\':"+metricData[0]+"," + "\'timestamp\':\'"+timestamp+"\'" + "}]";
-            System.out.println(uri.toString());
-            System.out.println(json);
-            out.write(json);
-            out.flush();
-            String line;
-            while ((line = in.readLine())!= null)
-            {
-                System.out.println(line);
-            }
-            out.close();
-        } catch (IOException e)
-        {
-            e.printStackTrace();
+        Client client = Client.create();
+        WebResource webResource = client
+                .resource("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
+
+        String json = "[{" + "\'reading\':"+metricData[0]+"," + "\'timestamp\':\'"+timestamp+"\'" + "}]";
+        ClientResponse response = webResource.type("application/json")
+                .post(ClientResponse.class, json);
+
+        if (response.getStatus() != 200) {
+            throw new RuntimeException("Failed : HTTP error code : "
+                    + response.getStatus());
         }
+        System.out.println("Output from Server .... \n");
+        String output = response.getEntity(String.class);
+        System.out.println(output);
     }
 
     // Implementation of MqttCallback interface
