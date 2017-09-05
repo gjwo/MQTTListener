@@ -5,9 +5,12 @@ import static java.lang.Thread.sleep;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.json.JSONArray;
 
+import javax.ws.rs.core.MultivaluedMap;
 import java.net.*;
 import java.util.HashMap;
 
@@ -147,12 +150,9 @@ public class MQTTListener extends Thread implements MqttCallback
         //---------------
 
         String resource = circuitName+"/"+metricType;
-        if(!resources.containsKey(resource))
-            resources.put(resource, restClient.resource("http://192.168.1.127:3000/api/"+resource));
+        WebResource webResource = getResource(resource);
 
         String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
-
-        WebResource webResource = resources.get(resource);
 
         ClientResponse response = webResource.type("application/json")
                 .post(ClientResponse.class, json);
@@ -166,6 +166,13 @@ public class MQTTListener extends Thread implements MqttCallback
         //String output = response.getEntity(String.class);
     }
 
+
+    private WebResource getResource(String resource)
+    {
+        if(!resources.containsKey(resource))
+            resources.put(resource, restClient.resource("http://192.168.1.127:3000/api/"+resource));
+        return resources.get(resource);
+    }
     // Implementation of MqttCallback interface
 
     /**
@@ -189,6 +196,24 @@ public class MQTTListener extends Thread implements MqttCallback
             System.exit(9);
         }
 
+    }
+
+
+    private void printDataFrom(String resource, String start, String end)
+    {
+        WebResource webResource = getResource(resource);
+
+        ClientResponse response = webResource
+                .queryParam("start", start)
+                .queryParam("end", end)
+                .get(ClientResponse.class);
+
+        JSONArray data = new JSONArray(response.getEntity(String.class));
+        for(int i = 0; i < data.length(); i++)
+        {
+            System.out.println(data.getJSONObject(i).getDouble("reading") + " recorded at " +
+                    data.getJSONObject(i).getString("timestamp"));
+        }
     }
 
     /**
