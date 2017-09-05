@@ -142,7 +142,7 @@ public class MQTTListener extends Thread implements MqttCallback
         WebResource webResource = client
                 .resource("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
 
-        String json = "[{" + "\'reading\':"+metricData[0]+"," + "\'timestamp\':\'"+timestamp+"\'" + "}]";
+        String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
         ClientResponse response = webResource.type("application/json")
                 .post(ClientResponse.class, json);
 
