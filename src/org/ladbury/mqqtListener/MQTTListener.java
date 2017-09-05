@@ -1,6 +1,8 @@
 package org.ladbury.mqqtListener;
 
 import static java.lang.Thread.sleep;
+
+import com.sun.org.apache.xpath.internal.SourceTree;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
@@ -105,7 +107,7 @@ public class MQTTListener extends Thread implements MqttCallback
                     msgArrived = false;
                     nbrMessagesReceivedOK++;
                     if (isEcho()) System.out.println("Topic: '" +lastTopic+ "'"+" Message: '" + new String(lastPayload.getPayload())+ "'");
-                    if (isApi()) processViaApi(lastTopic, lastPayload.getPayload());
+                    if (isApi()) processViaApi(lastTopic, new String(lastPayload.getPayload()));
                 }
                 sleep(10);
             }
@@ -115,24 +117,27 @@ public class MQTTListener extends Thread implements MqttCallback
             System.out.println("Data Processing Interrupted, exiting");
         }
     }
-    private void processViaApi(String lastTopic, byte[] payload)
+    private void processViaApi(String lastTopic, String message)
     {
         // expected message emon/PMon10/Upstairs_Lighting/ApparentPower' Message: '0.000 VA at 05-Sep-2017 11:21:12'
         URI uri;
         String [] topics = lastTopic.split("/");
         int topicDepth = topics.length;
+        //System.out.println(topicDepth + " " + topics[0] + " " + topics[1] + " " + topics[2] + " " + topics[3]);
         if ((topicDepth < 4) ||
                 (!topics[0].equalsIgnoreCase("emon")) ||
                 (!topics[1].equalsIgnoreCase("PMon10")))return; // wrong format of topic
         String circuitName = topics[2].toLowerCase(); //Should be the circuit name
         String metricType = topics[3].toLowerCase(); // Should be the metrics type realPower, ApparentPower etc.
-        String [] metricData = payload.toString().split(" "); //
-        int dataFields = metricData.length;
-        if ( ((dataFields < 5) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
+        String [] metricData = message.split(" "); //
+        int noDataFields = metricData.length;
+        //System.out.println(noDataFields + " "+ message);
+        //System.out.println(noDataFields + " " + metricData[0] + " " + metricData[1] + " " + metricData[2] + " " + metricData[3]+ " " + metricData[4]);
+        if ( ((noDataFields < 5) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
         String timestamp = metricData[3]+"T"+metricData[4];
         try
         {
-            uri = new URI("192.168.1.127:3000/api/"+circuitName+"/"+metricType);
+            uri = new URI("http://192.168.1.127:3000/api/"+circuitName+"/"+metricType);
             HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
