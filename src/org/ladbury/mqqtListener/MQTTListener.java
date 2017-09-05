@@ -167,7 +167,7 @@ public class MQTTListener extends Thread implements MqttCallback
     }
 
 
-    private WebResource getResource(String resource)
+    private synchronized WebResource getResource(String resource)
     {
         if(!resources.containsKey(resource))
             resources.put(resource, restClient.resource("http://192.168.1.127:3000/api/"+resource));
