@@ -48,10 +48,11 @@ public class Main implements IParameterValidator
         mqttListener.setEcho(main.echo);
         if (main.api)
         {
-            main.dbRestAPI = new DBRestAPI();
+            main.dbRestAPI = new DBRestAPI(null); // default
             mqttListener.setAPIDB(main.dbRestAPI);
         }
 	    mqttListener.start();
+        //demo code for reading database
         main.dbRestAPI.printDBResourceForPeriod("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
     }
 

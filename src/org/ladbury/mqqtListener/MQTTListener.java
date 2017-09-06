@@ -95,6 +95,7 @@ public class MQTTListener extends Thread implements MqttCallback
             System.out.println("Data Processing Interrupted, exiting");
         }
     }
+
     private void processViaApi(String lastTopic, String message)
     {
         // expected message emon/PMon10/Upstairs_Lighting/ApparentPower' Message: '0.000 VA at 05-Sep-2017 11:21:12'
@@ -121,7 +122,6 @@ public class MQTTListener extends Thread implements MqttCallback
         }
     }
 
-
     /**
      * connectionLost       called back if the connection is lost
      * @param throwable     thrown if we cannot reconnect
@@ -144,8 +144,6 @@ public class MQTTListener extends Thread implements MqttCallback
         }
 
     }
-
-
 
     /**
      * messageArrived       Called when there is a message to be processed
