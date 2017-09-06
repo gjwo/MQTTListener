@@ -53,7 +53,11 @@ public class Main implements IParameterValidator
         }
 	    mqttListener.start();
         //demo code for reading database
-        main.dbRestAPI.printDBResourceForPeriod("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
+        main.dbRestAPI.printDBResourceForPeriod("whole_house/voltage","2017-09-05T20:00:00.147Z", "2017-09-05T20:54:20.147Z");
+        TimestampedDouble[] results;
+        results = main.dbRestAPI.getDBResourceForPeriod("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
+        for (int i= 0; i < results.length; i++)
+            System.out.println(results[i].toString());
     }
 
     /**
