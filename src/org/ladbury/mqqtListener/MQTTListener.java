@@ -40,8 +40,7 @@ public class MQTTListener extends Thread implements MqttCallback
     private int nbrMessagesReceivedOK;
     private boolean api;
     private boolean echo;
-    private final HashMap<String, WebResource> resources;
-    private final Client restClient;
+    private DBRestAPI dbRestAPI;
 
     /**
      * MQTTListener Constructor
@@ -57,8 +56,6 @@ public class MQTTListener extends Thread implements MqttCallback
         super();
         api = false;
         echo = false;
-        resources = new HashMap<>();
-        restClient = Client.create();
         if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
             else this.topic = topic;
         if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
@@ -68,6 +65,7 @@ public class MQTTListener extends Thread implements MqttCallback
         this.qos = qos;
         this.user = user;
         this.password = password;
+
         try
         {
             mqttClient = new MqttClient(broker, clientId, new MemoryPersistence());
@@ -144,36 +142,16 @@ public class MQTTListener extends Thread implements MqttCallback
         if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
         String timestamp = metricData[3]; //+"T"+metricData[4];
 
-
-        // --------------
-        // RESTful code
-        //---------------
-
         String resource = circuitName+"/"+metricType;
-        WebResource webResource = getResource(resource);
-
         String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
 
-        ClientResponse response = webResource.type("application/json")
-                .post(ClientResponse.class, json);
-
-        if (response.getStatus() != 200) {
-            throw new RuntimeException("Failed : HTTP error code : "
-                    + response.getStatus());
-            //TODO manage properly
+        int restReturnCode = dbRestAPI.postToDB(resource, json);
+        if (restReturnCode!= DBRestAPI.REST_REQUEST_SUCCESSFUL)
+        {
+            dbRestAPI.printLastError();
         }
-        // response if wanted:
-        //String output = response.getEntity(String.class);
     }
 
-
-    private synchronized WebResource getResource(String resource)
-    {
-        if(!resources.containsKey(resource))
-            resources.put(resource, restClient.resource("http://192.168.1.127:3000/api/"+resource));
-        return resources.get(resource);
-    }
-    // Implementation of MqttCallback interface
 
     /**
      * connectionLost       called back if the connection is lost
@@ -199,22 +177,6 @@ public class MQTTListener extends Thread implements MqttCallback
     }
 
 
-    void printDataFrom(String resource, String start, String end)
-    {
-        WebResource webResource = getResource(resource);
-
-        ClientResponse response = webResource
-                .queryParam("start", start)
-                .queryParam("end", end)
-                .get(ClientResponse.class);
-
-        JSONArray data = new JSONArray(response.getEntity(String.class));
-        for(int i = 0; i < data.length(); i++)
-        {
-            System.out.println(data.getJSONObject(i).getDouble("reading") + " recorded at " +
-                    data.getJSONObject(i).getString("timestamp"));
-        }
-    }
 
     /**
      * messageArrived       Called when there is a message to be processed
@@ -289,4 +251,5 @@ public class MQTTListener extends Thread implements MqttCallback
     {
         this.echo = echo;
     }
+    void setAPIDB(DBRestAPI api) { this.dbRestAPI = api;}
 }

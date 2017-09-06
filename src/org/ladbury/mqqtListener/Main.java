@@ -28,6 +28,7 @@ public class Main implements IParameterValidator
     private boolean echo = false;
     @Parameter(names={"--api","-a" }, description = "if present output the message to the api")
     private boolean api = false;
+    DBRestAPI dbRestAPI = null;
 
     /**
      * main             Program's entry point
@@ -45,8 +46,13 @@ public class Main implements IParameterValidator
         MQTTListener mqttListener = new MQTTListener(main.topic,main.clientId, main.broker, main.qos, main.user, main.password);
         mqttListener.setApi(main.api);
         mqttListener.setEcho(main.echo);
+        if (main.api)
+        {
+            main.dbRestAPI = new DBRestAPI();
+            mqttListener.setAPIDB(main.dbRestAPI);
+        }
 	    mqttListener.start();
-        mqttListener.printDataFrom("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
+        main.dbRestAPI.printDBResourceForPeriod("whole_house/voltage","2017-09-05T20:00:00.147", "2017-09-05T20:54:20.147");
     }
 
     /**
