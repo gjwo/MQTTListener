@@ -1,21 +1,9 @@
 package org.ladbury.mqqtListener;
 
-import static java.lang.Thread.sleep;
-
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.json.JSONArray;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.net.*;
-import java.util.HashMap;
-
-import static java.lang.Thread.sleep;
-
+@SuppressWarnings("SpellCheckingInspection")
 public class MQTTListener extends Thread implements MqttCallback
 {
     static final String DEFAULT_CLIENT_ID = "MQTT_Listener";
@@ -23,13 +11,6 @@ public class MQTTListener extends Thread implements MqttCallback
     static final String DEFAULT_TOPIC = "#";
     static final int DEFAULT_QOS = 2;
 
-    //MQTT set up variables
-    private String clientId;
-    private String topic;
-    private int qos;
-    private String broker;
-    private String user = "";
-    private String password = "";
     private MqttClient mqttClient;
     private MqttConnectOptions connOpts;
 
@@ -44,7 +25,7 @@ public class MQTTListener extends Thread implements MqttCallback
 
     /**
      * MQTTListener Constructor
-     * @param topic         MQQT topic to be listen to / processed
+     * @param topic         MQTT topic to be listen to / processed
      * @param clientId      The name of this MQTT restClient
      * @param broker        The protocol, address and port of the MQTT server / broker
      * @param qos           Quality of service
@@ -56,26 +37,19 @@ public class MQTTListener extends Thread implements MqttCallback
         super();
         api = false;
         echo = false;
-        if (topic.isEmpty()) this.topic = DEFAULT_TOPIC;
-            else this.topic = topic;
-        if (clientId.isEmpty()) this.clientId = DEFAULT_CLIENT_ID;
-            else this.clientId = clientId;
-        if (broker.isEmpty()) this.clientId = DEFAULT_BROKER;
-            else this.broker = broker;
-        this.qos = qos;
-        this.user = user;
-        this.password = password;
-
+        if (topic.isEmpty()) topic = DEFAULT_TOPIC;
+        if (clientId.isEmpty()) clientId = DEFAULT_CLIENT_ID;
+        if (broker.isEmpty()) clientId = DEFAULT_BROKER;
         try
         {
             mqttClient = new MqttClient(broker, clientId, new MemoryPersistence());
             mqttClient.setCallback(this);
             connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
-            if (!this.user.isEmpty())
+            if (!user.isEmpty())
             {
-                connOpts.setUserName(this.user);
-                connOpts.setPassword(this.password.toCharArray());
+                connOpts.setUserName(user);
+                connOpts.setPassword(password.toCharArray());
             }
             System.out.println("Connecting MQTTListener to broker: "+broker);
             mqttClient.connect(connOpts);
@@ -102,8 +76,6 @@ public class MQTTListener extends Thread implements MqttCallback
     @Override
     public void run()
     {
-        byte[] serialBytes = null;
-        String subTopic;
         try
         {
             while (!Thread.interrupted())
@@ -126,27 +98,24 @@ public class MQTTListener extends Thread implements MqttCallback
     private void processViaApi(String lastTopic, String message)
     {
         // expected message emon/PMon10/Upstairs_Lighting/ApparentPower' Message: '0.000 VA at 05-Sep-2017 11:21:12'
-        URI uri;
         String [] topics = lastTopic.split("/");
         int topicDepth = topics.length;
-        //System.out.println(topicDepth + " " + topics[0] + " " + topics[1] + " " + topics[2] + " " + topics[3]);
         if ((topicDepth < 4) ||
                 (!topics[0].equalsIgnoreCase("emon")) ||
                 (!topics[1].equalsIgnoreCase("PMon10")))return; // wrong format of topic
-        String circuitName = topics[2].toLowerCase(); //Should be the circuit name
-        String metricType = topics[3].toLowerCase(); // Should be the metrics type realPower, ApparentPower etc.
-        String [] metricData = message.split(" "); //
-        int noDataFields = metricData.length;
-        //System.out.println(noDataFields + " "+ message);
-        //System.out.println(noDataFields + " " + metricData[0] + " " + metricData[1] + " " + metricData[2] + " " + metricData[3]+ " " + metricData[4]);
-        if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
-        String timestamp = metricData[3]; //+"T"+metricData[4];
 
+        String circuitName = topics[2].toLowerCase(); //Should be the circuit name Whole_House, Upstairs_Lighting etc
+        String metricType = topics[3].toLowerCase(); // Should be the metrics type realPower, ApparentPower etc.
         String resource = circuitName+"/"+metricType;
+
+        String [] metricData = message.split(" "); //expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
+        int noDataFields = metricData.length;
+        if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data
+
+        String timestamp = metricData[3];
         String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
 
-        int restReturnCode = dbRestAPI.postToDB(resource, json);
-        if (restReturnCode!= DBRestAPI.REST_REQUEST_SUCCESSFUL)
+        if (dbRestAPI.postToDB(resource, json)!= DBRestAPI.REST_REQUEST_SUCCESSFUL)
         {
             dbRestAPI.printLastError();
         }

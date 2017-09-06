@@ -28,7 +28,7 @@ public class Main implements IParameterValidator
     private boolean echo = false;
     @Parameter(names={"--api","-a" }, description = "if present output the message to the api")
     private boolean api = false;
-    DBRestAPI dbRestAPI = null;
+    private DBRestAPI dbRestAPI = null;
 
     /**
      * main             Program's entry point
