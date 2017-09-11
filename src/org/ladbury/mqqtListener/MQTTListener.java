@@ -115,7 +115,8 @@ public class MQTTListener extends Thread implements MqttCallback
         int noDataFields = metricData.length;
         if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data
 
-        TimestampedDouble timestampedDouble = new TimestampedDouble(Double.parseDouble(metricData[0]), metricData[3]+"Z" );
+        TimestampedDouble timestampedDouble = new TimestampedDouble(    Double.parseDouble(metricData[0]),
+                                                                metricData[3]+"Z" ); //TODO fix properly
         String json = "[{" + "\"reading\":"+timestampedDouble.getValue()+"," +
                 "\"timestamp\":\""+timestampedDouble.toEpochMilli()+"\"" + "}]";
 
