@@ -3,6 +3,8 @@ package org.ladbury.mqqtListener;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import java.time.Instant;
+
 @SuppressWarnings("SpellCheckingInspection")
 public class MQTTListener extends Thread implements MqttCallback
 {
@@ -107,14 +109,15 @@ public class MQTTListener extends Thread implements MqttCallback
 
         String circuitName = topics[2].toLowerCase(); //Should be the circuit name Whole_House, Upstairs_Lighting etc
         String metricType = topics[3].toLowerCase(); // Should be the metrics type realPower, ApparentPower etc.
-        String resource = circuitName+"/"+metricType;
+        String resource = "device/"+circuitName+"/"+metricType;
 
         String [] metricData = message.split(" "); //expecting "<value>", "<symbol>", "at", "<Date>", "<Time>"
         int noDataFields = metricData.length;
         if ( ((noDataFields < 4) || (!metricData[2].equalsIgnoreCase("at")))) return; // not enough data
 
-        String timestamp = metricData[3];
-        String json = "[{" + "\"reading\":"+metricData[0]+"," + "\"timestamp\":\""+timestamp+"\"" + "}]";
+        TimestampedDouble timestampedDouble = new TimestampedDouble(Double.parseDouble(metricData[0]), metricData[3]+"Z" );
+        String json = "[{" + "\"reading\":"+timestampedDouble.getValue()+"," +
+                "\"timestamp\":\""+timestampedDouble.toEpochMilli()+"\"" + "}]";
 
         if (dbRestAPI.postToDB(resource, json)!= DBRestAPI.REST_REQUEST_SUCCESSFUL)
         {

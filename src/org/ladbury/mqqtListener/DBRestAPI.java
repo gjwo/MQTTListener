@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 public class DBRestAPI
 {
-    public static final String DEFAULT_API_URL = "http://192.168.1.127:3000/api/";
+    public static final String DEFAULT_API_URL = "http://192.168.1.127:8080/";
     public static final int REST_REQUEST_SUCCESSFUL = 200;
 
     private final HashMap<String, WebResource> resources;

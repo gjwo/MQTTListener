@@ -32,9 +32,15 @@ public class TimestampedDouble
 
     public TimestampedDouble(double value, String timeString)
     {
+        System.out.println(timeString);
         this.value = value;
-        TemporalAccessor creationAccessor = DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(timeString);
+
+        TemporalAccessor creationAccessor = DateTimeFormatter.ISO_ZONED_DATE_TIME.
+                withLocale(Locale.UK).
+                withZone(ZoneId.systemDefault()).
+                parse(timeString);
         this.timestamp = Instant.from(creationAccessor);
+        //this.timestamp = Instant.parse(timeString);
     }
 
     public String toString()
@@ -45,6 +51,10 @@ public class TimestampedDouble
                         .withZone( ZoneId.systemDefault() );
         //System.out.println(String.format("Metric: {%.03f %s at %s}", value,unit.getSymbol(), formatter.format(timestamp)));
         return String.format("%.03f at %s", value, formatter.format(timestamp));
+    }
+    public long toEpochMilli()
+    {
+        return timestamp.toEpochMilli();
     }
 
     public Instant getTimestamp()
